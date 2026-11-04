@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="fr" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mon Suivi d'Habitudes</title>
+    
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>Mon Suivi d'Habitudes</h1>
+        <p>Gardez le cap sur vos objectifs quotidiens</p>
+    </header>
+
+    <div class="card">
+        <div class="input-group">
+            <input type="text" id="habitInput" placeholder="Nouvelle habitude (ex: Sport, Lecture)...">
+            <button onclick="addHabit()">Ajouter</button>
+        </div>
+
+        <div id="habitList">
+            <!-- Habitudes injectées ici -->
+        </div>
+    </div>
+</div>
+
+<script>
+    let habits = JSON.parse(localStorage.getItem('habits')) || [
+        { id: 1, name: 'Lire 20 min', history: [true, false, true, true, false, true, true] }
+    ];
+
+    const days = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
+
+    function save() {
+        localStorage.setItem('habits', JSON.stringify(habits));
+        render();
+    }
+
+    function addHabit() {
+        const input = document.getElementById('habitInput');
+        if (!input.value) return;
+        habits.push({
+            id: Date.now(),
+            name: input.value,
+            history: [false, false, false, false, false, false, false]
+        });
+        input.value = '';
+        save();
+    }
+
+    function toggleDay(habitId, dayIndex) {
+        const habit = habits.find(h => h.id === habitId);
+        habit.history[dayIndex] = !habit.history[dayIndex];
+        save();
+    }
+
+    function deleteHabit(id) {
+        habits = habits.filter(h => h.id !== id);
+        save();
+    }
+
+    function render() {
+        const list = document.getElementById('habitList');
+        list.innerHTML = `
+            <div class="habit-row" style="border:none">
+                <div></div>
+                ${days.map(d => `<div class="day-label">${d}</div>`).join('')}
+                <div></div>
+            </div>
+        `;
+
+        habits.forEach(habit => {
+            const row = document.createElement('div');
+            row.className = 'habit-row';
+            
+            let streak = 0;
+            [...habit.history].reverse().forEach(d => d ? streak++ : null);
+
+            row.innerHTML = `
+                <div class="habit-name">${habit.name} <br> <small class="streak">Série: ${streak}j</small></div>
+                ${habit.history.map((checked, i) => `
+                    <div class="day-check ${checked ? 'checked' : ''}" onclick="toggleDay(${habit.id}, ${i})">
+                        ${checked ? '✓' : ''}
+                    </div>
+                `).join('')}
+                <button class="delete-btn" onclick="deleteHabit(${habit.id})">✕</button>
+            `;
+            list.appendChild(row);
+        });
+    }
+
+    render();
+</script>
+</body>
+</html>
